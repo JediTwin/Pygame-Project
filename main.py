@@ -1,16 +1,56 @@
-# This is a sample Python script.
+# Pygame Project
+# Author: Noel Rebiffe
+# 9 November 2021
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+# Get introduced to Pygame and draw objects on screen
+
+import pygame
+
+pygame.init()
+
+WHITE =(255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+
+SCREEN_WIDTH  = 800
+SCREEN_HEIGHT = 600
+SCREEN_SIZE   = (SCREEN_WIDTH, SCREEN_HEIGHT)
+WINDOW_TITLE  = "Pygame Drawing"
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+def main() -> None:
+    """Driver of the Python script"""
+    # Create the screen
+    screen = pygame.display.set_mode(SCREEN_SIZE)
+    pygame.display.set_caption(WINDOW_TITLE)
+
+    # Create some local variables that describe the environment
+    done = False
+    clock = pygame.time.Clock()
+
+    # ------------- MAIN LOOP
+    while not done:
+        # --------- EVENT LISTENER
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+        # --------- CHANGE ENVIRONMENT
+
+        # --------- DRAW THE ENVIRONMENT
+        screen.fill(WHITE)
+        for i in range(10):
+            pygame.draw.rect(screen, RED, [100+i*10, 100+i*10, 75, 30])
+
+        pygame.draw.circle(screen, BLUE, [500, 300], 100)
+
+        # Update screen
+        pygame.display.flip()
+
+        # --------- CLOCK TICK
+        clock.tick(75)
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+    main()

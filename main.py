@@ -6,7 +6,7 @@
 # Only in control of the vertical movement of the ball, you must dodge obstacles and bounce off the sides of the screen
 # as many times as you can
 
-import pygame
+import pygame, random
 
 pygame.init()
 
@@ -48,11 +48,16 @@ class Player(pygame.sprite.Sprite):
         self.x_vel = 8
         self.y_vel = 0
 
+        self.hp = 3
+
     def update(self):
         """Changes to the player"""
 
         # Moving up and down
         self.rect.y += self.y_vel
+
+        # Moving to the side
+        self.rect.x += self.x_vel
 
     def move_up(self):
         """Called when the user presses W"""
@@ -62,9 +67,27 @@ class Player(pygame.sprite.Sprite):
         """Called when the user presses S"""
         self.y_vel = 8
 
+    def stop_move(self):
+        """When the user releases a movement key"""
+        self.y_vel = 0
 
-class Blocker(pygame.sprite.Sprite):
+
+class Block(pygame.sprite.Sprite):
     """The Obstacles"""
+
+    def __init__(self):
+        """What is block"""
+        super().__init__()
+
+        self.image = pygame.Surface((4, 50))
+
+        self.rect = self.image.get_rect()
+
+        # Define block location
+        self.rect.x, self.rect.y = (
+            random.randrange(int(SCREEN_WIDTH / 3), int(SCREEN_WIDTH / 3) * 2),
+            random.randrange(SCREEN_HEIGHT)
+        )
 
 
 def main() -> None:
@@ -76,6 +99,25 @@ def main() -> None:
     # Create some local variables that describe the environment
     done = False
     clock = pygame.time.Clock()
+    score = 0
+    num_obstacles = 5
+    game_state = "running"
+
+    endgame_messages = {
+        "lose": "Sorry, they got you. Play again!",
+    }
+
+    font = pygame.font.Font("./data/PixeloidSans.ttf", 25)
+
+    # Player
+    player = Player()
+
+    # Add to sprite groups
+    all_sprites = pygame.sprite.Group()
+    player_sprite = pygame.sprite.Group()
+    block_sprites = pygame.sprite.Group()
+
+    all_sprites.add(player)
 
     # ------------- MAIN LOOP
     while not done:
@@ -83,11 +125,60 @@ def main() -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = True
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_w:
+                    player.move_up()
+                if event.key == pygame.K_s:
+                    player.move_down()
+
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_w or event.key == pygame.K_s:
+                    player.stop_move()
+
+            if player.hp <= 0:
+                game_state = "lose"
+
         # --------- CHANGE ENVIRONMENT
 
+        if player.rect.left > SCREEN_WIDTH or player.rect.right < 0:
+            player.x_vel = -player.x_vel
+            score += 1
+
+            # Place blocks
+            for i in range(num_obstacles):
+                # Create a block
+                block = Block()
+                # Add block to sprite groups
+                all_sprites.add(block)
+                block_sprites.add(block)
+
+        # screen boundary
+        if player.rect.top < 0:
+            player.rect.top = 0
+        if player.rect.bottom > SCREEN_HEIGHT:
+            player.rect.bottom = SCREEN_HEIGHT
+
+        all_sprites.update()
+
+        # Check collisions
+        blocks_hit = pygame.sprite.spritecollide(player, block_sprites, True)
+
+        for block in blocks_hit:
+            player.hp -= 1
 
         # --------- DRAW THE ENVIRONMENT
         screen.fill(WHITE)
+
+        # Draw sprite
+        all_sprites.draw(screen)
+
+        # Draw lose text
+        if game_state == "lose":
+            screen.blit(
+                font.render(endgame_messages["lose"], True, BLACK),
+                (SCREEN_WIDTH / 3, SCREEN_HEIGHT / 3)
+            )
 
         # Update screen
         pygame.display.flip()

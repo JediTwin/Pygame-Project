@@ -6,7 +6,7 @@
 # Only in control of the vertical movement of the ball, you must dodge obstacles and bounce off the sides of the screen
 # as many times as you can
 
-import pygame, random
+import pygame, random, time
 
 pygame.init()
 
@@ -102,9 +102,10 @@ def main() -> None:
     score = 0
     num_obstacles = 5
     game_state = "running"
+    time_ended = 0.0
 
     endgame_messages = {
-        "lose": "Sorry, they got you. Play again!",
+        "lose": "You Lose. Play again!",
     }
 
     font = pygame.font.Font("./data/PixeloidSans.ttf", 25)
@@ -136,8 +137,11 @@ def main() -> None:
                 if event.key == pygame.K_w or event.key == pygame.K_s:
                     player.stop_move()
 
-            if player.hp <= 0:
-                game_state = "lose"
+            if game_state == "lose":
+                if time_ended == 0.0:
+                    time_ended = time.time()
+
+                all_sprites.remove(player)
 
         # --------- CHANGE ENVIRONMENT
 
@@ -166,6 +170,9 @@ def main() -> None:
 
         for block in blocks_hit:
             player.hp -= 1
+
+            if player.hp <= 0:
+                game_state = "lose"
 
         # --------- DRAW THE ENVIRONMENT
         screen.fill(WHITE)

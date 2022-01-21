@@ -101,8 +101,9 @@ def main() -> None:
     clock = pygame.time.Clock()
     score = 0
     num_obstacles = 5
-    game_state = "running"
+    game_state = "menu"
     time_ended = 0.0
+    endgame_wait = 5
 
     endgame_messages = {
         "lose": "You Lose. Play again!",
@@ -115,7 +116,6 @@ def main() -> None:
 
     # Add to sprite groups
     all_sprites = pygame.sprite.Group()
-    player_sprite = pygame.sprite.Group()
     block_sprites = pygame.sprite.Group()
 
     all_sprites.add(player)
@@ -143,8 +143,11 @@ def main() -> None:
 
                 all_sprites.remove(player)
 
-        # --------- CHANGE ENVIRONMENT
+                # # Wait before returning to menu
+                # if time.time() - time_ended >= endgame_wait:
+                #     game_state = "menu"
 
+        # --------- CHANGE ENVIRONMENT
         if player.rect.left > SCREEN_WIDTH or player.rect.right < 0:
             player.x_vel = -player.x_vel
             score += 1

@@ -121,12 +121,11 @@ def main() -> None:
     # Create some local variables that describe the environment
     done = False
     clock = pygame.time.Clock()
-    score = -1
+    score = 0
     num_obstacles = 5
     game_over = True
-    time_ended = 0.0
-    endgame_wait = 5
     high_score = 0
+    spd_count = 5
 
     def menu_screen():
         screen.fill(WHITE)
@@ -134,9 +133,7 @@ def main() -> None:
         draw_text(screen, "Bounce", 64, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3)
         draw_text(screen, "Use W and S to move!", 32, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
         draw_text(screen, "Press space to start!", 32, SCREEN_WIDTH / 2, (SCREEN_HEIGHT - SCREEN_HEIGHT / 3))
-        draw_text(screen, "Don't get hit more than twice!", 32, SCREEN_WIDTH / 2, (SCREEN_HEIGHT - SCREEN_HEIGHT / 4))
-        draw_text(screen, "Hitting blocks clears the screen, but deducts points.", 32, SCREEN_WIDTH / 2,
-                  (SCREEN_HEIGHT - SCREEN_HEIGHT / 5))
+        draw_text(screen, "Hitting blocks clears the screen, but costs a life and deducts points.", 32, SCREEN_WIDTH / 2, (SCREEN_HEIGHT - SCREEN_HEIGHT / 4))
         pygame.display.flip()
         waiting = True
         # Check inputs
@@ -144,11 +141,10 @@ def main() -> None:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    done = True
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_SPACE:
                         waiting = False
-                        bgm.play()
+                        bgm.play(-1)
 
     # Player
     player = Player()
@@ -166,17 +162,16 @@ def main() -> None:
             # Show menu
             menu_screen()
             # Reset Game
-            score = -1
+            score = 0
             player.hp = 3
             for block in block_sprites:
                 block.kill()
             player.rect.x = 0
             player.rect.y = 0
-            player.x_vel = -6
+            player.x_vel = 6
             time.ended = 0.0
             # Start game
             game_over = False
-
 
         # --------- EVENT LISTENER
         for event in pygame.event.get():
@@ -217,15 +212,26 @@ def main() -> None:
                     all_sprites.add(block)
                     block_sprites.add(block)
 
+                spd_count -= 1
+
+                if spd_count == 0:
+                    positive = True
+                    if player.x_vel < 0:
+                        positive = False
+                    player.x_vel = abs(player.x_vel) + 2
+                    if not positive:
+                        player.x_vel *= -1
+                    spd_count = 5
+
             all_sprites.update()
 
             # Check collisions
             blocks_hit = pygame.sprite.spritecollide(player, block_sprites, True)
 
             for i in blocks_hit:
-                player.hp -= 1
                 for block in block_sprites:
                     block.kill()
+                player.hp -= 1
                 score -= 2
 
             if player.hp <= 0:

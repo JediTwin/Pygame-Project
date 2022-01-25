@@ -12,6 +12,8 @@ import pygame
 import random
 import time
 
+from pygame import mixer
+
 pygame.init()
 
 WHITE = (255, 255, 255)
@@ -26,6 +28,10 @@ SCREEN_SIZE   = (SCREEN_WIDTH, SCREEN_HEIGHT)
 WINDOW_TITLE  = "Bounce"
 
 font_name = pygame.font.Font("./data/PixeloidSans.ttf", 25)
+
+wall_hit = pygame.mixer.Sound("./sounds/Pong_hit.mp3")
+
+death_sound = pygame.mixer.Sound("./sounds/Galaga_death.mp3")
 
 
 def draw_text(surf, text, size, x, y):
@@ -59,7 +65,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
         # Set velocities
-        self.x_vel = 8
+        self.x_vel = -6
         self.y_vel = 0
 
         self.hp = 3
@@ -113,11 +119,30 @@ def main() -> None:
     # Create some local variables that describe the environment
     done = False
     clock = pygame.time.Clock()
-    score = 0
+    score = -1
     num_obstacles = 5
-    game_state = "menu"
+    game_over = True
     time_ended = 0.0
     endgame_wait = 5
+    high_score = 0
+
+    def menu_screen():
+        screen.fill(WHITE)
+        # Draw the menu
+        draw_text(screen, "Bounce", 64, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3)
+        draw_text(screen, "Use W and S to move!", 32, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+        draw_text(screen, "Press space to start!", 32, SCREEN_WIDTH / 2, (SCREEN_HEIGHT - SCREEN_HEIGHT / 3))
+        draw_text(screen, "Don't get hit more than twice!", 32, SCREEN_WIDTH / 2, (SCREEN_HEIGHT - SCREEN_HEIGHT / 4))
+        pygame.display.flip()
+        waiting = True
+        # Check inputs
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_SPACE:
+                        waiting = False
 
     # Player
     player = Player()
@@ -128,6 +153,24 @@ def main() -> None:
 
     # ------------- MAIN LOOP
     while not done:
+        if game_over:
+            # Check Score
+            if score > high_score:
+                high_score = score
+            # Show menu
+            menu_screen()
+            # Reset Game
+            score = -1
+            player.hp = 3
+            for block in block_sprites:
+                block.kill()
+            player.rect.x = 0
+            player.rect.y = 0
+            player.x_vel = -6
+            time.ended = 0.0
+            # Start game
+            game_over = False
+
         # --------- EVENT LISTENER
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -143,42 +186,8 @@ def main() -> None:
                 if event.key == pygame.K_w or event.key == pygame.K_s:
                     player.stop_move()
 
-            if game_state == "menu":
-                # Draw the menu
-                draw_text(screen, "Bounce", 64, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3)
-                draw_text(screen, "Use W and S to move!", 32, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
-                draw_text(screen, "Press space to start!", 32, SCREEN_WIDTH / 2, (SCREEN_HEIGHT - SCREEN_HEIGHT / 3))
-                pygame.display.flip()
-                # Check inputs
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_SPACE:
-                        # Reset Game
-                        score = 0
-                        player.hp = 3
-                        for block in block_sprites:
-                            block.kill()
-                        player.rect.x = 0
-                        player.rect.y = 0
-                        time.ended = 0.0
-
-                        # Change game state
-                        game_state = "running"
-
-            if game_state == "end":
-                all_sprites.remove(player)
-                player.kill()
-
-                if time_ended == 0.0:
-                    time_ended = time.time()
-
-                # Wait before returning to menu
-                if time.time() - time_ended >= endgame_wait:
-                    game_state = "menu"
-
         # --------- CHANGE ENVIRONMENT
-        if game_state == "running":
+        if not game_over:
             all_sprites.add(player)
             # Screen bounds
             if player.rect.top < 0:
@@ -190,6 +199,8 @@ def main() -> None:
             if player.rect.left > SCREEN_WIDTH or player.rect.right < 0:
                 player.x_vel = -player.x_vel
                 score += 1
+
+                wall_hit.play()
 
                 # Place blocks
                 for i in range(num_obstacles):
@@ -204,11 +215,20 @@ def main() -> None:
             # Check collisions
             blocks_hit = pygame.sprite.spritecollide(player, block_sprites, True)
 
-            for block in blocks_hit:
+            for i in blocks_hit:
                 player.hp -= 1
+                for block in block_sprites:
+                    block.kill()
+                score -= 2
 
-                if player.hp <= 0:
-                    game_state = "end"
+            if player.hp <= 0:
+                all_sprites.remove(player)
+                player.kill()
+                player.x_vel = 0
+
+                death_sound.play()
+
+                game_over = True
 
         # --------- DRAW THE ENVIRONMENT
         screen.fill(WHITE)
@@ -216,9 +236,10 @@ def main() -> None:
         # Draw sprite
         all_sprites.draw(screen)
 
-        # Draw lose text
-        if game_state == "end":
-            draw_text(screen, "You died. Play again!", 32, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3)
+        # Draw Score
+        draw_text(screen, f"Score: {score}", 24, SCREEN_WIDTH/10, SCREEN_HEIGHT/10)
+
+        draw_text(screen, f"High-Score: {high_score}", 24, SCREEN_WIDTH/10, SCREEN_HEIGHT/8)
 
         # Update screen
         pygame.display.flip()

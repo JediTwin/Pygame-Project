@@ -12,8 +12,6 @@ import pygame
 import random
 import time
 
-from pygame import mixer
-
 pygame.init()
 
 WHITE = (255, 255, 255)
@@ -29,9 +27,13 @@ WINDOW_TITLE  = "Bounce"
 
 font_name = pygame.font.Font("./data/PixeloidSans.ttf", 25)
 
+# SFX
 wall_hit = pygame.mixer.Sound("./sounds/Pong_hit.mp3")
-
 death_sound = pygame.mixer.Sound("./sounds/Galaga_death.mp3")
+
+# Music
+bgm = random.choice([pygame.mixer.Sound("./sounds/Battle Against a Weird Opponent.mp3"),
+                     pygame.mixer.Sound("./sounds/Sanctuary Guardian.mp3")])
 
 
 def draw_text(surf, text, size, x, y):
@@ -133,6 +135,8 @@ def main() -> None:
         draw_text(screen, "Use W and S to move!", 32, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
         draw_text(screen, "Press space to start!", 32, SCREEN_WIDTH / 2, (SCREEN_HEIGHT - SCREEN_HEIGHT / 3))
         draw_text(screen, "Don't get hit more than twice!", 32, SCREEN_WIDTH / 2, (SCREEN_HEIGHT - SCREEN_HEIGHT / 4))
+        draw_text(screen, "Hitting blocks clears the screen, but deducts points.", 32, SCREEN_WIDTH / 2,
+                  (SCREEN_HEIGHT - SCREEN_HEIGHT / 5))
         pygame.display.flip()
         waiting = True
         # Check inputs
@@ -140,9 +144,11 @@ def main() -> None:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
+                    done = True
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_SPACE:
                         waiting = False
+                        bgm.play()
 
     # Player
     player = Player()
@@ -170,6 +176,7 @@ def main() -> None:
             time.ended = 0.0
             # Start game
             game_over = False
+
 
         # --------- EVENT LISTENER
         for event in pygame.event.get():
@@ -226,6 +233,7 @@ def main() -> None:
                 player.kill()
                 player.x_vel = 0
 
+                bgm.stop()
                 death_sound.play()
 
                 game_over = True
@@ -238,8 +246,8 @@ def main() -> None:
 
         # Draw Score
         draw_text(screen, f"Score: {score}", 24, SCREEN_WIDTH/10, SCREEN_HEIGHT/10)
-
         draw_text(screen, f"High-Score: {high_score}", 24, SCREEN_WIDTH/10, SCREEN_HEIGHT/8)
+        draw_text(screen, f"Lives: {player.hp}", 24, SCREEN_WIDTH/10, SCREEN_HEIGHT/7 + 10)
 
         # Update screen
         pygame.display.flip()

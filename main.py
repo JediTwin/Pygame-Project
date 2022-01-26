@@ -32,8 +32,7 @@ wall_hit = pygame.mixer.Sound("./sounds/Pong_hit.mp3")
 death_sound = pygame.mixer.Sound("./sounds/Galaga_death.mp3")
 
 # Music
-bgm = random.choice([pygame.mixer.Sound("./sounds/Battle Against a Weird Opponent.mp3"),
-                     pygame.mixer.Sound("./sounds/Sanctuary Guardian.mp3")])
+bgm = random.choice([pygame.mixer.Sound("./sounds/Battle Against a Weird Opponent.mp3"), pygame.mixer.Sound("./sounds/Sanctuary Guardian.mp3")])
 
 
 def draw_text(surf, text, size, x, y):

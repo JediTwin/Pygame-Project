@@ -6,7 +6,7 @@
 # Only in control of the vertical movement of the ball, you must dodge obstacles and bounce off the sides of the screen
 # as many times as you can
 
-# draw_text appropriated from George's Jungle Jam
+# draw_text flipped from George's Jungle Jam
 
 import pygame
 import random
